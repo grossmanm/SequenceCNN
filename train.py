@@ -16,8 +16,8 @@ class DeliveryNotificationCNN(nn.Module):
         self.dropout = nn.Dropout(0.1)
 
         # transform encoder
-        encoder_layer = nn.TransformerEncoderLayer(d_model=32, nhead=4)
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
+        #encoder_layer = nn.TransformerEncoderLayer(d_model=32, nhead=4)
+        #self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
         
         # Fully connected layers
         self.fc1 = nn.Linear(32 * sequence_length, 50)
@@ -31,9 +31,9 @@ class DeliveryNotificationCNN(nn.Module):
         x = self.dropout(x)
         
         # Flatten for fully connected layers
-        x = x.permute(2,0,1)
+        #x = x.permute(2,0,1)
 
-        x = self.transform(x)
+        #x = self.transformer(x)
         x = x.view(x.size(0), -1)
 
 
@@ -82,7 +82,7 @@ def train_model(model, optimizer, loss_function, dataloader, num_epochs):
         print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {running_loss/len(dataloader):.4f}")
 
 
-data = pd.read_csv('data/r2_timings_parameters_public.csv')
+data = pd.read_csv('data/r1_timings_distance.csv')
 
 sequence_length = 5
 features = ['rtt_server', 'rtt_receiver', 'rtt_diff'] #features
@@ -92,8 +92,12 @@ features = ['rtt_server', 'rtt_receiver', 'rtt_diff'] #features
 
 # label encoder
 label_encoder = LabelEncoder()
-data['receiver_location'] = label_encoder.fit_transform(data['receiver_location'])
-labels = data['receiver_location'].values
+data['SR_Distance'] = label_encoder.fit_transform(data['SR_Distance'])
+
+label_mapping = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
+print(label_mapping)
+
+labels = data['SR_Distance'].values
 # create sequences
 def create_sequences(data,sequence_length,features,labels):
     sequences = []
@@ -117,16 +121,18 @@ def create_sequences(data,sequence_length,features,labels):
 print("Creating Dataset")       
         
 sequences, sequence_labels = create_sequences(data, sequence_length, features, labels)
-
+print(sequences)
 train_sequences = sequences[int(len(sequences)*.8):]
 train_labels = sequence_labels[int(len(sequence_labels)*.8):]
 test_sequences = sequences[:int(len(sequences)*.8)]
 test_labels = sequence_labels[:int(len(sequence_labels)*.8)]
+print(train_labels)
 
 X_train = torch.tensor(train_sequences, dtype=torch.float32).transpose(1,2)
 y_train = torch.tensor(train_labels, dtype=torch.long)
 X_test = torch.tensor(test_sequences, dtype=torch.float32).transpose(1,2)
 y_test = torch.tensor(test_labels, dtype=torch.long)
+
 
 batch_size = 2
 dataset = TensorDataset(X_train, y_train)
@@ -138,7 +144,7 @@ print("Data Loader initialized. Begin Training")
 train_model(model, optimizer, loss_function, dataloader, num_epochs)
 
 print("Saving Trained Model")
-torch.save(model, "model2_transformer.pth")
+torch.save(model, "model1.pth")
 # evaluation 
 print("Begin Evaluation")
 dataset_test = TensorDataset(X_test, y_test)
