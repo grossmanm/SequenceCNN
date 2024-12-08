@@ -66,11 +66,13 @@ Data and Model Setup
 """
 model = LSTMPredictor(embedding_dim=3, hidden_dim=3, output_dimension=10)
 
-train_dataset = SequenceDataset('data/r1_timings_distance.csv', train=False)
+print("Loading Data")
+percent = 100
+train_dataset = SequenceDataset('data/r1_timings_distance.csv', train=True, data_percent=percent)
 train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 
-# test_dataset = SequenceDataset('data/r1_timings_distance.csv', train=False)
-# test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=True)
+test_dataset = SequenceDataset('data/r1_timings_distance.csv', train=False)
+test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=True)
 
 print(f"Training Data: {len(train_dataset)}")
 
@@ -90,7 +92,7 @@ model.zero_grad()
 """
 Training
 """
-learning_rate = 0.001
+learning_rate = 0.01
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 num_epochs = 20
