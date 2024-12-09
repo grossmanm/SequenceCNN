@@ -51,26 +51,46 @@ class DeliveryNotificationCNN(nn.Module):
 
 # load model
 model = torch.load('model1.pth')
+test_data = 'test_data_d_01.csv'
 
-messages = [
-    {'sTime': 7.648223, 'mTime':7.740022,'rTime':8.606829}
-]
 
-rtt_times = []
+data = pd.read_csv(test_data)
 
-for message in messages:
-    rtt_server = message['mTime']-message['sTime']
-    rtt_receiver = message['rTime']-message['sTime']
-    rtt_diff = rtt_receiver-rtt_server
-    for i in range(5):
-        rtt_times.append([rtt_server, rtt_receiver, rtt_diff])
+def create_sequences(data,sequence_length,features,labels):
+    sequences = []
+    sequence_labels = []
+    for i in range(len(data)-sequence_length):
+        list_finished = True
+        cur_loc = data['sequence'][i]
+        seq = np.zeros((sequence_length,3))
 
-rtt_times = np.array([rtt_times])
-rtt_times = torch.tensor(rtt_times, dtype=torch.float32).transpose(1,2)
+        for j in range(sequence_length):
+            if cur_loc == data['sequence'][i+j]:
+                seq[j] = data[features].iloc[i+j].values 
+            else:
+                list_finished = False
+        if list_finished:
+            sequences.append(seq)
+            sequence_labels.append(labels[i])
+    return np.array(sequences), np.array(sequence_labels)
+
+labels = data['label'].values
+sequences, sequence_labels = create_sequences(data, 5, ['mTime','rTime','rtt_diff'], labels)
+print(sequences.shape)
+X_test = torch.tensor(sequences, dtype=torch.float32).transpose(1,2)
+y_test = torch.tensor(sequence_labels, dtype=torch.long)
+batch_size = 1
+dataset = TensorDataset(X_test,y_test)
+
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+total = 0
+correct = 0
 with torch.no_grad():
-    outputs = model(rtt_times)
-    _, predicted = torch.max(outputs.data, 1)
-    print(predicted)
-
+    for inputs, labels in dataloader:
+        outputs = model(inputs)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted==labels).sum().item()
+print(f'Accuracy of the network: {100 * correct // total} %')
 
 
