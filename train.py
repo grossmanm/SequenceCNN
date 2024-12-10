@@ -121,7 +121,6 @@ def create_sequences(data,sequence_length,features,labels):
 print("Creating Dataset")       
         
 sequences, sequence_labels = create_sequences(data, sequence_length, features, labels)
-print(sequences)
 train_sequences = sequences[int(len(sequences)*.8):]
 train_labels = sequence_labels[int(len(sequence_labels)*.8):]
 test_sequences = sequences[:int(len(sequences)*.8)]
