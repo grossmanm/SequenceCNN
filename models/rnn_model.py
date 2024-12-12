@@ -12,19 +12,19 @@ from data_processing.data_sequence import create_dataset
 
 torch.manual_seed(1)
 
-class LSTMPredictor(nn.Module):
+class RNNPredictor(nn.Module):
     def __init__(self, embedding_dim, hidden_dim, output_dimension):
-        super(LSTMPredictor, self).__init__()
+        super(RNNPredictor, self).__init__()
 
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim)
+        self.rnn = nn.RNN(embedding_dim, hidden_dim)
 
         self.distancelayer = nn.Linear(hidden_dim, output_dimension)
 
     def forward(self, sequence):
-        lstm_out, hidden = self.lstm(sequence)
-        lstm_out = lstm_out[-1, :, :] # select the final output
+        rnn_out, hidden = self.rnn(sequence)
+        rnn_out = rnn_out[-1, :, :] # select the final output
 
-        out = self.distancelayer(lstm_out)
+        out = self.distancelayer(rnn_out)
         
         return out
     
@@ -65,7 +65,9 @@ if __name__ == "__main__":
     """
     Data and Model Setup
     """
-    model = LSTMPredictor(embedding_dim=3, hidden_dim=3, output_dimension=10)
+    print("Creating Model")
+    model = RNNPredictor(embedding_dim=3, hidden_dim=3, output_dimension=10)
+    print(model)
 
     print("Loading Data")
     percent = 100
@@ -120,7 +122,7 @@ if __name__ == "__main__":
     train_model(model, optimizer,loss_function, train_dataloader, num_epochs)
 
     print("Saving the Model")
-    torch.save(model.state_dict(), "lstm_model.pth")
+    torch.save(model.state_dict(), "rnn_model.pth")
 
     """
     Testing
